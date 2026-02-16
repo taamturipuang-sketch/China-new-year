@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pattern X3 - HYBRID O/E ULTIMATE</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Kanit:wght@300;400;600&display=swap');
+        
+        :root { 
+            --gold: #ffd700; --red-main: #b30000; --red-dark: #4d0000;
+            --p-color: #0066ff; --b-color: #ff3333; 
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background: radial-gradient(circle, var(--red-main), var(--red-dark));
+            color: white; font-family: 'Kanit', sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 10px 5px; height: 100vh; overflow: hidden; position: relative;
+        }
+
+        #win-runner {
+            position: absolute; top: 40%; left: -150%; 
+            font-family: 'Orbitron', sans-serif; font-size: 5rem; font-weight: 900;
+            color: var(--gold); text-shadow: 0 0 20px #fff, 0 0 40px var(--gold);
+            z-index: 1000; pointer-events: none;
+        }
+        .win-active { animation: win-flow 3.5s ease-in-out forwards; }
+        @keyframes win-flow {
+            0% { left: -150%; opacity: 0; transform: scale(0.5); }
+            25% { left: 50%; transform: translateX(-50%) scale(1.2); opacity: 1; } 
+            75% { left: 50%; transform: translateX(-50%) scale(1.2); opacity: 1; } 
+            100% { left: 150%; opacity: 0; transform: scale(1.5); } 
+        }
+
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; color: var(--gold); border-bottom: 2px solid var(--gold); margin-bottom: 8px; }
+
+        .road-container { 
+            width: 100%; max-width: 420px; height: 90px; background: #fff; border: 2px solid var(--gold); 
+            display: flex; overflow-x: auto; border-radius: 8px; margin-bottom: 8px; 
+        }
+        .road-column { display: flex; flex-direction: column; min-width: 15px; border-right: 1px solid #ddd; }
+        .road-cell { width: 15px; height: 15px; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: center; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; font-size: 8px; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .action-bar { 
+            width: 100%; max-width: 420px; display: flex; align-items: center; justify-content: space-evenly; 
+            background: rgba(0,0,0,0.6); padding: 12px 5px; border-radius: 10px; border: 2px solid var(--gold); margin-bottom: 10px;
+        }
+
+        .btn-main {
+            width: 48px; height: 48px; border-radius: 6px; border: 2px solid #fff;
+            font-family: 'Orbitron', sans-serif; font-size: 1.15rem; font-weight: 900;
+            color: white; cursor: pointer; transition: all 0.1s;
+        }
+        .btn-p { background: linear-gradient(135deg, #0088ff, #0044cc); }
+        .btn-b { background: linear-gradient(135deg, #ff4444, #cc0000); }
+
+        .chip-container { position: relative; width: 110px; height: 110px; display: flex; align-items: center; justify-content: center; }
+        .led-ring {
+            position: absolute; width: 100%; height: 100%; border-radius: 50%; 
+            background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red);
+            -webkit-mask: radial-gradient(farthest-side, transparent 92%, white 93%);
+            mask: radial-gradient(farthest-side, transparent 92%, white 93%);
+            animation: rotate-led 2s linear infinite; display: none;
+        }
+        @keyframes rotate-led { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .chip {
+            width: 90px; height: 90px; border-radius: 50%; border: 4px double var(--gold);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'Orbitron', sans-serif; background: #222; z-index: 2; transition: all 0.3s;
+        }
+        .chip.P { background: var(--p-color); box-shadow: 0 0 20px var(--p-color); border-color: #fff; }
+        .chip.B { background: var(--b-color); box-shadow: 0 0 20px var(--b-color); border-color: #fff; }
+        .chip .mode-label { font-size: 0.55rem; color: rgba(255,255,255,0.7); }
+        .chip .pred-val { font-size: 2.2rem; font-weight: 900; color: #fff; }
+
+        .money-bar { width: 100%; max-width: 420px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-bottom: 10px; }
+        .m-box { background: rgba(0,0,0,0.7); border: 1px solid #555; padding: 5px 2px; text-align: center; border-radius: 4px; font-size: 0.6rem; color: var(--gold); }
+        .m-box input { width: 100%; background: transparent; border: none; color: #fff; text-align: center; font-size: 0.75rem; outline: none; }
+        .m-box.active { background: var(--gold); color: #000; font-weight: bold; box-shadow: 0 0 10px var(--gold); }
+
+        .history-wrapper { 
+            width: 100%; max-width: 420px; height: 320px; 
+            overflow-y: scroll; border: 2px solid var(--gold); border-radius: 10px; background: rgba(0,0,0,0.5); 
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .history-wrapper::-webkit-scrollbar { display: none; }
+
+        .history-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .history-table th { background: var(--red-dark); color: var(--gold); padding: 8px 5px; font-size: 0.7rem; position: sticky; top:0; }
+        .history-table td { padding: 8px 0; border-bottom: 1px solid rgba(255,215,0,0.1); font-weight: bold; font-size: 0.9rem; }
+        
+        .res-win { color: #00ff00 !important; background: rgba(0,255,0,0.1); }
+        .res-loss { color: #444 !important; }
+    </style>
+</head>
+<body>
+
+    <div id="win-runner">WIN</div>
+    <h1>PATTERN X3 HYBRID</h1>
+    
+    <div class="road-container" id="bigRoad"></div>
+
+    <div class="action-bar">
+        <button class="btn-main btn-p" onclick="record('P')">P</button>
+        <button class="btn-main btn-b" onclick="record('B')">B</button>
+        <div class="chip-container">
+            <div id="led" class="led-ring"></div>
+            <div id="coin" class="chip">
+                <span class="mode-label" id="modeTxt">WAIT</span>
+                <span class="pred-val" id="predTxt">-</span>
+            </div>
+        </div>
+        <button style="width:36px; height:36px; background:none; color:var(--gold); border:1px solid var(--gold); border-radius: 5px;" onclick="undo()">⟲</button>
+        <button style="width:36px; height:36px; background:none; color:var(--gold); border:1px solid var(--gold); border-radius: 5px;" onclick="reset()">✖</button>
+    </div>
+
+    <div class="money-bar">
+        <div class="m-box" id="mBox1">M1<input type="number" id="m1v" value="5" oninput="calcMoney()"></div>
+        <div class="m-box" id="mBox2">M2<div id="m2v">10</div></div>
+        <div class="m-box" id="mBox3">M3<div id="m3v">25</div></div>
+        <div class="m-box" id="mBox4">M4<div id="m4v">50</div></div>
+        <div class="m-box" id="mBox5">M5<div id="m5v">110</div></div>
+        <div class="m-box" id="mBox6">M6<div id="m6v">220</div></div>
+    </div>
+
+    <div class="history-wrapper">
+        <table class="history-table">
+            <thead><tr><th>RD</th><th>REAL</th><th>MODE</th><th>PRED</th><th>STP</th><th>RESULT</th></tr></thead>
+            <tbody id="logBody"></tbody>
+        </table>
+    </div>
+
+<script>
+    let history = [];
+    let step = 1;
+    const winSfx = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
+    winSfx.volume = 0.2;
+
+    function calcMoney() {
+        let v = parseInt(document.getElementById('m1v').value) || 0;
+        document.getElementById('m2v').innerText = v * 2;
+        document.getElementById('m3v').innerText = v * 5;
+        document.getElementById('m4v').innerText = v * 10;
+        document.getElementById('m5v').innerText = v * 22;
+        document.getElementById('m6v').innerText = v * 44;
+    }
+
+    // --- ส่วนที่ปรับปรุงใหม่: LOGIC พิเศษตามโจทย์ ---
+    function getHybridPred(data) {
+        if (data.length < 5) return { mode: 'WAIT', val: '-' };
+        
+        const last = data[data.length - 1];
+        const p1 = data[data.length - 2];
+        const p2 = data[data.length - 3];
+        const p3 = data[data.length - 4];
+        const p4 = data[data.length - 5];
+
+        let combo = 0;
+        for (let i = data.length - 1; i >= 0; i--) {
+            if (data[i] === last) combo++;
+            else break;
+        }
+
+        // 1. [COMBO 4] แก้ทาง 141 / 414: ถ้าออก 4 ตัวติดกัน ให้สั่ง "ตัด" ทันที
+        if (combo === 4) {
+            return { mode: 'MODE-E', val: (last === 'P' ? 'B' : 'P') };
+        }
+
+        // 2. [COMBO 2] แก้ทาง 212121 / 222: 
+        if (combo === 2) {
+            // ถ้าก่อนหน้าเป็นลูกคู่เหมือนกัน (เช่น P P B B) ให้สั่ง "ตัด" เพื่อดักสลับ 2121
+            if (p2 !== last && p3 === p2) {
+                return { mode: 'MODE-E', val: (last === 'P' ? 'B' : 'P') };
+            }
+            // ถ้าไม่ใช่ ให้ "ตาม" เพื่อสร้างชุด 222 หรือ 333
+            return { mode: 'MODE-E', val: last };
+        }
+        
+        // 3. [COMBO 1] ดักทาง 2-1 และ ปิงปอง: 
+        if (combo === 1) {
+            // ถ้าก่อนหน้าเป็นคู่ (เช่น P P B) ให้ "ตาม" ตัวเดี่ยวเพื่อดูว่าเป็น 2-1 หรือ 2-2
+            if (p1 === p2) return { mode: 'MODE-E', val: last };
+            // ถ้าเป็นปิงปองสลับมาต่อเนื่อง ให้ "ตัด" (สลับสีตามปิงปอง)
+            return { mode: 'MODE-E', val: (last === 'P' ? 'B' : 'P') };
+        }
+
+        // 4. [COMBO 3] มังกร/333: อย่ารีบตัดที่ตัวที่ 3 ให้ไหลตามไปกินไม้ที่ 4
+        if (combo === 3) {
+            return { mode: 'MODE-E', val: last };
+        }
+
+        // 5. [COMBO 5+] โหมดมังกรไหลยาว: ไหลตามจนกว่าจะหลุด
+        if (combo >= 5) {
+            return { mode: 'MODE-E', val: last };
+        }
+
+        return { mode: 'MODE-O', val: (last === 'P' ? 'B' : 'P') };
+    }
+
+    function record(val) {
+        const raw = history.map(h => h.real);
+        const prediction = getHybridPred(raw);
+        let win = false;
+        if (prediction.mode !== 'WAIT') {
+            win = (val === prediction.val);
+            if (win) { step = 1; showWin(); } 
+            else { step = (step >= 6) ? 1 : step + 1; }
+        }
+        history.push({ real: val, mode: prediction.mode, pred: prediction.val, isWin: win, stepAt: step });
+        updateUI();
+    }
+
+    function showWin() {
+        const wr = document.getElementById('win-runner');
+        wr.classList.add('win-active');
+        winSfx.play();
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#ffd700', '#ffffff'] });
+        setTimeout(() => wr.classList.remove('win-active'), 3000);
+    }
+
+    function updateUI() {
+        const road = document.getElementById('bigRoad'); road.innerHTML = "";
+        let cols = [[]], lastR = "";
+        history.forEach(h => {
+            if(lastR==="" || (h.real===lastR && cols[cols.length-1].length<6)) cols[cols.length-1].push(h.real);
+            else cols.push([h.real]); lastR = h.real;
+        });
+        cols.forEach(c => {
+            let div = document.createElement('div'); div.className='road-column';
+            for(let i=0; i<6; i++){
+                let cell = document.createElement('div'); cell.className='road-cell';
+                if(c[i]){
+                    let dot = document.createElement('div'); dot.className='dot';
+                    dot.style.background = c[i]==='P'?'var(--p-color)':'var(--b-color)';
+                    dot.innerText = c[i]; cell.appendChild(dot);
+                }
+                div.appendChild(cell);
+            }
+            road.appendChild(div);
+        });
+        road.scrollLeft = road.scrollWidth;
+
+        const next = getHybridPred(history.map(h => h.real));
+        document.getElementById('modeTxt').innerText = next.mode;
+        document.getElementById('predTxt').innerText = next.val;
+        document.getElementById('coin').className = "chip " + (next.val === '-' ? '' : next.val);
+        document.getElementById('led').style.display = next.mode === 'WAIT' ? 'none' : 'block';
+
+        for(let i=1; i<=6; i++){
+            document.getElementById('mBox'+i).classList.remove('active');
+            if(step === i && next.mode !== 'WAIT') document.getElementById('mBox'+i).classList.add('active');
+        }
+
+        const log = document.getElementById('logBody'); log.innerHTML = "";
+        history.slice().reverse().forEach((h, idx) => {
+            const isWait = h.mode === 'WAIT';
+            const win = h.isWin && !isWait;
+            log.innerHTML += `<tr class="${win ? 'res-win' : (isWait ? '' : 'res-loss')}">
+                <td>${history.length-idx}</td>
+                <td style="color:${h.real==='P'?'var(--p-color)':'var(--b-color)'}">${h.real}</td>
+                <td>${h.mode}</td>
+                <td style="color:${h.pred==='P'?'var(--p-color)':'var(--b-color)'}">${h.pred}</td>
+                <td>M${h.stepAt}</td>
+                <td>${isWait ? '-' : (win ? 'WIN' : 'LOSS')}</td>
+            </tr>`;
+        });
+    }
+
+    function undo() { history.pop(); step = 1; updateUI(); }
+    function reset() { if(confirm("ล้างข้อมูลทั้งหมด?")) { history = []; step = 1; updateUI(); } }
+    calcMoney();
+    updateUI();
+</script>
+</body>
+</html>
